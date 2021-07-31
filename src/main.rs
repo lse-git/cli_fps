@@ -21,6 +21,19 @@ use termion::input::TermRead;
 use termion::event::Key;
 
 // Initialixe all game constants
+const MAP: [str; 12] = [
+"############",
+"#..........#",
+"#..........#",
+"#..........#",
+"#..........#",
+"#..........#",
+"#..........#",
+"#..........#",
+"#..........#",
+"#..........#",
+"#..........#",
+"############",];
 const PLAYER_FOV: u8 = 90;    // FOV of the player
 const PLAYER_ROTATION_SPEED: f32 = 1.5;    // Speed of the player rotation
 const PLAYER_MOVEMENT_SPEED: f32 = 0.1;    // Speed of the players movement
