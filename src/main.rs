@@ -21,7 +21,7 @@ use termion::input::TermRead;
 use termion::event::Key;
 
 // Initialixe all game constants
-const MAP: [str; 12] = [
+const MAP: [&str; 12] = [
 "############",
 "#..........#",
 "#..........#",
@@ -63,6 +63,7 @@ fn main() {
                         set_cursor = termion::cursor::Goto(column, line)).unwrap();
             }
         }
+
         write!(stdout, "{set_cursor}{invert}rotation: {}{reset}",
                 player_rotation,
                 set_cursor = termion::cursor::Goto(1, 1),
