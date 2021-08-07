@@ -1,2 +1,2 @@
 # cli_fps
-A primitive first person shooter graphics engine in the terminal
+A primitive fps-like shooter graphics engine in the terminal
