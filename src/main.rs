@@ -67,7 +67,7 @@ fn main() {
             }
             let offset = i;
             for line in 2..=ter_size.1 {
-                let char_to_print = if (line <= (2 + offset)) | (line >= (ter_size.1 - offset)) {' '} else {SHADING[(offset - 1) as usize]};
+                let char_to_print = if (line <= (2 + offset)) | (line >= (ter_size.1 - offset)) {' '} else {if offset < 12 {SHADING[(offset - 1) as usize]} else {' '}};
                 // Move cursor to targeted pixel and display the needed char
                 if (column > 12) | (line > 13) {
                     write!(stdout, "{set_cursor}{}\r",
