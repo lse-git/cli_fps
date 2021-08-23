@@ -11,6 +11,8 @@ extern crate termion;
 // Import all needed crates
 use std::io::{Write, stdout};
 
+use std::time::Instant;
+
 use termion::raw::IntoRawMode;
 use termion::input::TermRead;
 use termion::event::Key;
@@ -18,11 +20,11 @@ use termion::event::Key;
 // Initialixe all game constants
 const MAP: [&str; 12] = [
 "############",
+"#......#...#",
 "#..........#",
-"#.....##...#",
+"#..#####...#",
 "#..........#",
-"#..........#",
-"#..........#",
+"#........###",
 "#..........#",
 "#..........#",
 "######.....#",
@@ -30,9 +32,17 @@ const MAP: [&str; 12] = [
 "#..........#",
 "############",];
 const SHADING: [char; 12] = ['@', '%', '#', '*', '+', '=', '~', '-', ';', ':', '.', ' '];
-const PLAYER_FOV: u8 = 1;    // FOV of the player
-const PLAYER_ROTATION_SPEED: f32 = 0.25;    // Speed of the player rotation
-const PLAYER_MOVEMENT_SPEED: f32 = 0.1;    // Speed of the players movement
+const PLAYER_FOV: f32 = 0.5;    // FOV of the player
+const PLAYER_ROTATION_SPEED: f32 = 0.5;    // Speed of the player rotation
+const PLAYER_MOVEMENT_SPEED: f32 = 0.5;    // Speed of the players movement
+const PAUSED_SCREEN: [&str; 7] = [
+r#""#,
+r#" ____   _   _   _ ____  _____ ____"#,
+r#"|  _ \ / \ | | | / ___|| ____|  _ \"#,
+r#"| |_) / _ \| | | \___ \| __| | | | |"#,
+r#"|  __/ ___ \ |_| |___) | |___| |_| |"#,
+r#"|_| /_/   \_\___/|____/|_____|____/"#,
+r#""#,];
 
 
 fn main() {
@@ -45,18 +55,27 @@ fn main() {
     stdout.flush().unwrap();
     
     // Initializing all game variables
-    let mut player_rotation: f32 = 0.0;    // Current rotation of the player
+    let mut player_rotation: f32 = 0.0;    // Current x rotation of the player
     let mut player_position_x: f32 = 5.0;    // Current x position of the player
     let mut player_position_y: f32 = 5.0;    // Current y position of the player
 
+    let mut paused: bool = false;    // True if paused, False if not
+
+    let mut time_for_frame = Instant::now().elapsed();
 
     // MAIN LOOP
     loop {
+        let frame_start = Instant::now();
         // Get terminal size
         let ter_size = termion::terminal_size().unwrap();
         // Loop through every "Pixel" of the screen
+        //if paused {
+        //    write!(stdout, "{clear}T",
+        //            clear = termion::clear::All).unwrap();
+        //    continue;
+        //}
         for column in 1..=ter_size.0 {
-            let ray_angle: f32 = player_rotation + ((PLAYER_FOV as f32) * ((((column as f32) / (ter_size.0 as f32)) * 2.0) - 1.0));
+            let ray_angle: f32 = player_rotation + (PLAYER_FOV * ((((column as f32) / (ter_size.0 as f32)) * 2.0) - 1.0));
             let mut i = 1;
             let mut ray_x = 5.0;
             let mut ray_y = 5.0;
@@ -67,7 +86,13 @@ fn main() {
             }
             let offset = i;
             for line in 2..=ter_size.1 {
-                let char_to_print = if (line <= (2 + offset)) | (line >= (ter_size.1 - offset)) {' '} else {if offset < 12 {SHADING[(offset - 1) as usize]} else {' '}};
+                let char_to_print = if line <= (2 + offset) {
+                    ' '
+                } else if line >= (ter_size.1 - offset) {
+                    '.'
+                } else {
+                    if offset < 12 {SHADING[(offset - 1) as usize]} else {' '}
+                };
                 // Move cursor to targeted pixel and display the needed char
                 if (column > 12) | (line > 13) {
                     write!(stdout, "{set_cursor}{}\r",
@@ -104,19 +129,49 @@ fn main() {
             match key {
                 // Exit if esc was pressed
                 Key::Esc => break,
-                Key::Char('a') => player_rotation -= PLAYER_ROTATION_SPEED,
-                Key::Char('d') => player_rotation += PLAYER_ROTATION_SPEED,
+                Key::Char('a') => player_rotation -= PLAYER_ROTATION_SPEED / (time_for_frame.as_millis() as f32),
+                Key::Char('d') => player_rotation += PLAYER_ROTATION_SPEED / (time_for_frame.as_millis() as f32),
                 Key::Char('w') => {
-                    player_position_x += (f32::sin(player_rotation) * PLAYER_MOVEMENT_SPEED);
-                    player_position_y += (f32::cos(player_rotation) * PLAYER_MOVEMENT_SPEED);
+                    player_position_x += if MAP[player_position_y as usize].as_bytes()[player_position_x as usize] as char != '#' {
+                        f32::sin(player_rotation) * (PLAYER_MOVEMENT_SPEED / (time_for_frame.as_millis() as f32))
+                    } else {
+                        0.0
+                    };
+                    player_position_y += if MAP[player_position_y as usize].as_bytes()[player_position_x as usize] as char != '#' {
+                        f32::cos(player_rotation) * (PLAYER_MOVEMENT_SPEED / (time_for_frame.as_millis() as f32))
+                    } else {
+                        0.0
+                    }
                 }
                 Key::Char('s') => {
-                    player_position_x -= (f32::sin(player_rotation) * PLAYER_MOVEMENT_SPEED);
-                    player_position_y -= (f32::cos(player_rotation) * PLAYER_MOVEMENT_SPEED);
+                    player_position_x -= if MAP[player_position_y as usize].as_bytes()[player_position_x as usize] as char != '#' {
+                        f32::sin(player_rotation) * (PLAYER_MOVEMENT_SPEED / (time_for_frame.as_millis() as f32))
+                    } else {
+                        0.0
+                    };
+                    player_position_y -= if MAP[player_position_y as usize].as_bytes()[player_position_x as usize] as char != '#' {
+                        f32::cos(player_rotation) * (PLAYER_MOVEMENT_SPEED / (time_for_frame.as_millis() as f32))
+                    } else {
+                        0.0
+                    }
+                }
+                Key::Char('r') => {
+                    player_position_x = 5.0;
+                    player_position_y = 5.0;
+                }
+                Key::Char('p') => {
+                    paused = !paused
                 }
                 _ => (),
             }
         }
+        time_for_frame = frame_start.elapsed();
+        write!(stdout, "{set_cursor}{clear}{invert}time for frame: {:?}{reset}",
+                time_for_frame,
+                set_cursor = termion::cursor::Goto(1, 1),
+                clear = termion::clear::CurrentLine,
+                invert = termion::style::Invert,
+                reset = termion::style::Reset).unwrap();
     }
     write!(stdout, "{set_cursor}{clear}{}",
             termion::cursor::Show,
