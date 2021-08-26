@@ -196,16 +196,16 @@ fn main() {
         }
 
         // Display all access information in the top left corner of the screen
-        write!(
-            stdout,
-            "{set_cursor}{clear}{invert}rotation: {}{reset}",
-            player_rotation,
-            set_cursor = termion::cursor::Goto(1, 1),
-            clear = termion::clear::CurrentLine,
-            invert = termion::style::Invert,
-            reset = termion::style::Reset
-        )
-        .unwrap();
+        //write!(
+        //    stdout,
+        //    "{set_cursor}{clear}{invert}rotation: {}{reset}",
+        //    player_rotation,
+        //    set_cursor = termion::cursor::Goto(1, 1),
+        //    clear = termion::clear::CurrentLine,
+        //    invert = termion::style::Invert,
+        //    reset = termion::style::Reset
+        //)
+        //.unwrap();
         // Print a live minimap to the screen
         for i in 0..12 {
             for ii in 0..12 {
@@ -236,8 +236,8 @@ fn main() {
         time_for_frame = frame_start.elapsed();
         write!(
             stdout,
-            "{set_cursor}{clear}{invert}time for frame: {:?}{reset}",
-            time_for_frame,
+            "{set_cursor}{clear}{invert}fps: {}{reset}",
+            (1000 / time_for_frame.as_millis()),
             set_cursor = termion::cursor::Goto(1, 1),
             clear = termion::clear::CurrentLine,
             invert = termion::style::Invert,
